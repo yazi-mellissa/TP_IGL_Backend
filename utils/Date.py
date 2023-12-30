@@ -31,7 +31,7 @@ class Date():
         return False
     
     def is_before_today(self):
-        today = Date(datetime.date.today().strftime("%d/%m/%Y"))
+        today = Date(date=datetime.date.today().strftime("%d/%m/%Y"))
         return self.is_before(today)
     
     def date_after_days(self, days):
