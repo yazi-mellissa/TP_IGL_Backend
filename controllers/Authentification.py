@@ -111,7 +111,6 @@ class Authentification():
         print(sha256_crypt.hash(password))
         result = db.query(Administrateur).filter(Administrateur.Email == email).first()
         if (result is not None ):
-            # rest le hachage du password
             if (sha256_crypt.verify(password, result.Password)):
                 # generat jwt and send token for admin
                 raise HTTPResponse(
@@ -128,7 +127,6 @@ class Authentification():
             # search in moderator
             result = db.query(Moderateur).filter(Moderateur.Email == email).first()
             if (result is not None ):
-                # rest le hachage du password
                 if (sha256_crypt.verify(password, result.Password)):
                     # generat jwt and send token for mod
                     raise HTTPResponse(
@@ -146,7 +144,6 @@ class Authentification():
                 result = db.query(Utilisateur).filter(Utilisateur.Email == email).first()
                 
                 if (result is not None ):
-                    # rest le hachage du password
                     if (sha256_crypt.verify(password, result.Password)):
                         # generat jwt and send token for user
                         raise HTTPResponse(
