@@ -2,11 +2,15 @@ import requests
 from sqlalchemy.orm import Session
 from fastapi import status
 from models.Article import Article
+from models.Auteur import Auteur
+from models.Institution import Institution
+from models.Mot_Cle import Mot_Cle
+from models.Reference import Reference
 from models.Moderateur import Moderateur
 from utils.Auth import check_token, Token_Payload
 from utils.Role import Role
 from utils.HTTPResponse import HTTPResponse
-from utils import get_file_path
+from utils.ExtendedArticle import ExtendedArticle
 from passlib.hash import sha256_crypt
 
 # Done
@@ -21,28 +25,73 @@ def is_admin (token : str) -> Token_Payload:
 
 class AdminController():
     
-    # Partially Done | Wait for merge with hiba elastic search and samy get data from pdf
+    # Done | Wait for merge with hiba elastic search and samy get data from pdf in ExtendedArticle class
     def upload_article (db: Session, token : str, link : str):
         is_admin(token=token)
         data = requests.api.get(url=link)
         if (data.headers.get('content-type') == "application/pdf" ): # is PDF file
-            # truc traitement
-            titre = ''
-            texte = ''
-            resume = ''
-            date = ''
+            # truc traitement est fait dans l'initialisation de l'objet
+            temp_article = ExtendedArticle(Link=link)
+            
             # truc indexation elastic search
+            temp_article.indexer()
 
             # insert in the database
-            nouveau_article = Article(Texte=texte, Resume=resume, Titre=titre, Valide=False, Date_Publication=date)
+            nouveau_article = Article(Texte=temp_article.Texte, Resume=temp_article.Resume, Titre=temp_article.Titre, Valide=False, Date_Publication=temp_article.get_date())
+            
+            # insert in the database : Les Auteurs si ca n'existe pas
+            for aut in temp_article.Auteurs:
+                auteur = db.query(Auteur).where(Auteur.Nom == aut[0]).first()
+                if (auteur):
+                    nouveau_article.Auteurs.append(auteur)
+                else:
+                    institution = db.query(Institution).where(Institution.Nom == aut[2][0]).first()
+                    nouveau_auteur = None
+                    if (institution):
+                        nouveau_auteur = Auteur(Nom=aut[0],Email=aut[1],ID_Institution=institution.ID_Institution)
+                    else:
+                        nouvelle_institution = Institution(Nom=aut[2][0],Adresse=aut[2][1])
+                        db.add(nouvelle_institution)
+                        db.commit()
+                        db.refresh(nouvelle_institution)
+                        nouveau_auteur = Auteur(Nom=aut[0],Email=aut[1],ID_Institution=nouvelle_institution.ID_Institution)
+                    db.add(nouveau_auteur)
+                    db.commit()
+                    db.refresh(nouveau_auteur)
+                    nouveau_article.Auteurs.append(nouveau_auteur)
+
+            # insert in the database : Les Mots Cles si ca n'existe pas
+            for mot in temp_article.Mots_Cles:
+                mot_cle = db.query(Mot_Cle).where(Mot_Cle.Mot_Cle == mot).first()
+                if (mot_cle is not None):
+                    nouveau_article.Mots_Cles.append(mot_cle)
+                else:
+                    nouveau_mot_cle = Mot_Cle(Mot_Cle=mot)
+                    db.add(nouveau_mot_cle)
+                    db.commit()
+                    db.refresh(nouveau_mot_cle)
+                    nouveau_article.Mots_Cles.append(nouveau_mot_cle)
+
+            # insert in the database : Les References si ca n'existe pas
+            for ref in temp_article.References:
+                reference = db.query(Reference).where(Reference.Reference == ref).first()
+                if (reference is not None):
+                    nouveau_article.References.append(reference)
+                else:
+                    nouvelle_reference = Reference(Reference=ref)
+                    db.add(nouvelle_reference)
+                    db.commit()
+                    db.refresh(nouvelle_reference)
+                    nouveau_article.References.append(nouvelle_reference)
+
             db.add(nouveau_article)
             db.commit()
             db.refresh(nouveau_article)
+            
             # write the file
-            file_name = get_file_path(nouveau_article.ID_Article)
-            file = open(file_name,'wb')
-            file.write(data.content)
-            file.close()
+            temp_article.set_id(ID=nouveau_article.ID_Article)
+            temp_article.save_pdf(data=data.content)
+            
             raise HTTPResponse(status_code=status.HTTP_200_OK,detail="Success")
         else: # is not PDF file
             raise HTTPResponse(status_code=status.HTTP_400_BAD_REQUEST,detail="Not a PDF file")
