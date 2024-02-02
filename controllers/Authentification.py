@@ -108,7 +108,6 @@ class Authentification():
     # Done | Works
     def log_in(db: Session, email : str, password : str):
         # Search in admin
-        print(sha256_crypt.hash(password))
         result = db.query(Administrateur).filter(Administrateur.Email == email).first()
         if (result is not None ):
             if (sha256_crypt.verify(password, result.Password)):
@@ -117,6 +116,7 @@ class Authentification():
                     status_code=status.HTTP_200_OK,
                     detail={
                         "token": generate_token(result),
+                        "nom": result.Nom,
                         "role": Role.ADMIN.value
                     },
                 )
@@ -133,6 +133,7 @@ class Authentification():
                         status_code=status.HTTP_200_OK,
                         detail={
                             "token": generate_token(result),
+                            "nom": result.Nom,
                             "role": Role.MOD.value
                         },
                     )
@@ -150,6 +151,7 @@ class Authentification():
                             status_code=status.HTTP_200_OK,
                             detail={
                                 "token": generate_token(result),
+                                "nom": result.Nom,
                                 "role": Role.USER.value
                             },
                         )
