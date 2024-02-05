@@ -11,7 +11,7 @@ router = APIRouter()
 def read_root():
     raise HTTPResponse(status_code=status.HTTP_200_OK,detail="Guerrout User")
 
-@router.get("/articles-favoris")
+@router.post("/articles-favoris")
 def handle_liste_des_favoris(user : User_Get_Favoris, db: Session = Depends(get_db)):
     UserController.liste_des_favoris(db, user.token)
 
