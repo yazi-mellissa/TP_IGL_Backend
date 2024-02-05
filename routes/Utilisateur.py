@@ -19,6 +19,11 @@ def handle_liste_des_favoris(user : User_Get_Favoris, db: Session = Depends(get_
 def handle_ajouter_favoris(user : User_Ajouter_Favoris, db: Session = Depends(get_db)):
     UserController.ajouter_favori(db, user.token, user.ID_Article)
 
+@router.post("/telecharger-article-favoris")
+def handle_ajouter_favoris(user : User_Ajouter_Favoris, db: Session = Depends(get_db)):
+    UserController.telecharger_favori(db, user.token, user.ID_Article)
+
+
 @router.post("/supprimer-article-favoris")
 def handle_supprimer_favoris(user : User_Supprimer_Favoris, db: Session = Depends(get_db)):
     UserController.supprimer_favori(db, user.token, user.ID_Article)

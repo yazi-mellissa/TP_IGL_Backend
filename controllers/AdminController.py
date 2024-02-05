@@ -131,4 +131,14 @@ class AdminController():
             status_code=status.HTTP_200_OK,
             detail=new_result
         )
-
+    
+    def articles(db: Session, token : str):
+        is_admin(token=token)
+        result = db.query(Article).with_entities(Article.Titre).all()
+        new_result = []
+        for article in result:
+            new_result.append(article[0])
+        raise HTTPResponse(
+            status_code=status.HTTP_200_OK,
+            detail=new_result
+        )
