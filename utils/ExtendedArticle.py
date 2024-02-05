@@ -20,7 +20,6 @@ class ExtendedArticle():
 
     def __init__(self, Link : str):
         client = GrobidClient(config_path="./config.json")
-        os.rename("path/to/current/file.foo", "path/to/new/destination/for/file.foo")
         client.process("processFulltextDocument", Link)
         self.Link = Link
         self.set_data()
@@ -94,7 +93,6 @@ class ExtendedArticle():
         return result
     
     def set_data(self) -> None:
-        # Samy for data extraction here
         self.Titre = self._get_title()
         self.Resume = self._get_abstract()
         self.Texte = self._get_text()
@@ -104,7 +102,6 @@ class ExtendedArticle():
         self.References = self._get_references()
 
     def indexer(self) -> None:
-        # Hiba for elastic search indexation here
         pass
 
     def get_date(self) -> str:
