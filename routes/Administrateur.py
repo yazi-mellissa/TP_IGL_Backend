@@ -23,6 +23,10 @@ def handle_ajouter_moderateur(user : Admin_Ajouter_Moderateur, db: Session = Dep
 def handle_supprimer_moderateur(user : Admin_Supprimer_Moderateur, db: Session = Depends(get_db)):
     AdminController.supprimer_moderateur(db, user.token, user.ID_Moderateur)
 
-@router.get("/liste-des-moderateurs")
+@router.post("/liste-des-moderateurs")
 def handle_liste_des_moderateurs(user : Admin, db: Session = Depends(get_db)):
     AdminController.moderateurs(db, user.token)
+
+@router.post("/liste-des-articles")
+def handle_liste_des_moderateurs(user : Admin, db: Session = Depends(get_db)):
+    AdminController.articles(db, user.token)

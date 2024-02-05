@@ -15,7 +15,7 @@ def handle_login(account : Account_To_LogIn, db : Session = Depends(get_db)):
 def handle_signup(account : Account_To_SignUp, db : Session = Depends(get_db)):
     Authentification.sign_up(db, account.email, account.password, account.nom)
 
-@router.get("/my-account")
+@router.post("/my-account")
 def handle_my_account(account : Account, db : Session = Depends(get_db)):
     Authentification.get_profile(db, account.token)
 

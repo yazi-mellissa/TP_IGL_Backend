@@ -5,7 +5,9 @@ from utils.HTTPResponse import HTTPResponse
 from sqlalchemy.orm import Session
 from models.Article import Article
 from models.Utilisateur import Utilisateur
-from sqlalchemy import update
+from utils import get_file_path
+from fastapi.responses import StreamingResponse
+from fastapi import HTTPException
 
 # Done
 
@@ -28,6 +30,16 @@ class UserController():
             liste_des_favoris.append(article.get_Object())
         raise HTTPResponse(status_code=status.HTTP_200_OK, detail=liste_des_favoris)
     
+    # Done | Not yet tested
+    def telecharger_favori(db: Session, token: str, ID_article : int):
+        check_token(token=token)
+        path = get_file_path(ID_article)
+        path = './data/articles/9.pdf'
+        Title = db.query(Article).filter(Article.ID_Article == ID_article).first().Titre
+        with open(path, mode="rb") as pdf_file:
+            pdf_bytes = pdf_file.read()
+        return StreamingResponse(content=pdf_bytes,status_code=200, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename=4.pdf"})
+
     # Done | Works
     def ajouter_favori(db: Session, token: str, ID_article : int):
         checked_token = check_token(token=token)
