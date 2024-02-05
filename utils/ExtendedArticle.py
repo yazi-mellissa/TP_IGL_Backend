@@ -1,5 +1,8 @@
 from utils import get_file_path
 from utils.Date import Date
+from grobid_client_python.grobid_client.grobid_client import GrobidClient
+from bs4 import BeautifulSoup
+import os
 
 class ExtendedArticle():
     
@@ -9,28 +12,96 @@ class ExtendedArticle():
     Texte : str
     Link : str
     Date_pub : Date
+    _Soup: BeautifulSoup
 
     Auteurs : list[(str, str, (str, str))] = []
     References : list[str] = []
     Mots_Cles : list[str] = []
 
     def __init__(self, Link : str):
+        client = GrobidClient(config_path="./config.json")
+        os.rename("path/to/current/file.foo", "path/to/new/destination/for/file.foo")
+        client.process("processFulltextDocument", Link)
         self.Link = Link
         self.set_data()
     
     def set_id(self, ID : int) -> None:
         self.ID = ID
 
+    def _elem_to_text(self, elem, default=""):
+        if elem:
+            return elem.getText()
+        else:
+            return default
+        
+    def _read_tei(self):
+        with open(self.Link, 'r', encoding="utf-8") as tei:
+             self._Soup = BeautifulSoup(tei, features="xml")
+    
+    def _get_title(self):
+        return self._Soup.title.getText()
+    
+    def _get_abstract(self):
+        return self._Soup.abstract.getText(separator=' ', strip=True)
+    
+    def _get_text(self):
+        divs_text = []
+        for div in self._Soup.body.find_all("div"):
+            if not div.get("type"):
+                div_text = div.get_text(separator='\n\n', strip=True)
+                divs_text.append(div_text)
+        plain_text = " ".join(divs_text)
+        return plain_text
+    
+    def _get_auteurs(self):
+        authors_in_header = self._Soup.analytic.find_all('author')
+        result = []
+        for author in authors_in_header:
+            persname = author.persName
+            if not persname:
+                continue
+
+            firstname = self._elem_to_text(persname.find("forename", type="first"))
+            middlename = self._elem_to_text(persname.find("forename", type="middle"))
+            surname = self._elem_to_text(persname.surname)
+            institution_name = self._elem_to_text(author.affiliation.orgName)
+            institution_address = self._elem_to_text(author.affiliation.address.addrLine)
+
+            name = [var for var in [firstname, middlename, surname] if var]
+            author = (name, "", (institution_name, institution_address))
+            result.append(author)
+        return result
+    
+    def _get_mots_cles(self):
+        keywords = self._Soup.keywords.find_all('term')
+        result = []
+        for keyword in keywords:
+            term = self._elem_to_text(keyword)
+            if term: result.append(term)
+        return result
+    
+    def _get_references(self):
+        monogr_in_references = self.soup.back.find_all('monogr')
+        result = []
+        for monogr in monogr_in_references:
+            title = monogr.title
+            if not title:
+                continue
+            reference = self._elem_to_text(title)
+            result.append(reference)
+    
+        result = [var for var in result if var]
+        return result
+    
     def set_data(self) -> None:
         # Samy for data extraction here
-        self.Titre = ""
-        self.Resume = ""
-        self.Texte = ""
+        self.Titre = self._get_title()
+        self.Resume = self._get_abstract()
+        self.Texte = self._get_text()
         self.date_pub = Date(date="01/01/1970")
-        self.Auteurs = []
-        self.Mots_Cles = []
-        self.References = []
-        pass
+        self.Auteurs = self._get_auteurs()
+        self.Mots_Cles = self._get_mots_cles()
+        self.References = self._get_references()
 
     def indexer(self) -> None:
         # Hiba for elastic search indexation here
