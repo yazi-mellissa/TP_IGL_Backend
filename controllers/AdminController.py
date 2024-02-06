@@ -24,21 +24,21 @@ def is_admin (token : str) -> Token_Payload:
     return checked_token
 
 class AdminController():
-    
     # Done | Wait for merge with hiba elastic search and samy get data from pdf in ExtendedArticle class
     def upload_article (db: Session, token : str, link : str):
         is_admin(token=token)
         data = requests.api.get(url=link)
         if (data.headers.get('content-type') == "application/pdf" ): # is PDF file
             # truc traitement est fait dans l'initialisation de l'objet
-            temp_article = ExtendedArticle(Link=link)
-            
-            # truc indexation elastic search
-            temp_article.indexer()
+            temp_article = ExtendedArticle(data=data.content)
+                        # truc indexation elastic search
+            # temp_article.indexer()
 
             # insert in the database
             nouveau_article = Article(Texte=temp_article.Texte, Resume=temp_article.Resume, Titre=temp_article.Titre, Valide=False, Date_Publication=temp_article.get_date())
-            
+            print()
+            print(temp_article.Auteurs)
+
             # insert in the database : Les Auteurs si ca n'existe pas
             for aut in temp_article.Auteurs:
                 auteur = db.query(Auteur).where(Auteur.Nom == aut[0]).first()
@@ -90,7 +90,7 @@ class AdminController():
             
             # write the file
             temp_article.set_id(ID=nouveau_article.ID_Article)
-            temp_article.save_pdf(data=data.content)
+            # temp_article.save_pdf(data=data.content)
             
             raise HTTPResponse(status_code=status.HTTP_200_OK,detail="Success")
         else: # is not PDF file

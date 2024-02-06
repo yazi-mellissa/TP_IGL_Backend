@@ -5,10 +5,10 @@ from bs4 import BeautifulSoup
 import os
 
 class ExtendedArticle():
-    
+
     ID : int
     Titre : str
-    Resume : str
+    Resume : str 
     Texte : str
     Link : str
     Date_pub : Date
@@ -18,15 +18,23 @@ class ExtendedArticle():
     References : list[str] = []
     Mots_Cles : list[str] = []
 
-    def __init__(self, Link : str):
+    def __init__(self, data : bytes):
+
+        file = open("./data/articles/current/current.pdf",'wb')
+        file.write(data)
+        file.close()
         client = GrobidClient(config_path="./config.json")
-        client.process("processFulltextDocument", Link)
-        self.Link = Link
+        client.process("processFulltextDocument", "./data/articles/current/", consolidate_citations=True, tei_coordinates=True, force=True)
+        print("hh1")
         self.set_data()
+        print("hh2")
+       # os.remove("./data/articles/current/current.pdf")
+       # os.remove("./data/articles/current/current.grobid.tei.xml")
+
     
     def set_id(self, ID : int) -> None:
         self.ID = ID
-
+        
     def _elem_to_text(self, elem, default=""):
         if elem:
             return elem.getText()
@@ -34,8 +42,8 @@ class ExtendedArticle():
             return default
         
     def _read_tei(self):
-        with open(self.Link, 'r', encoding="utf-8") as tei:
-             self._Soup = BeautifulSoup(tei, features="xml")
+        with open("./data/articles/current/current.grobid.tei.xml", 'r', encoding="utf-8") as tei:
+            self._Soup = BeautifulSoup(tei, "lxml")
     
     def _get_title(self):
         return self._Soup.title.getText()
@@ -54,9 +62,13 @@ class ExtendedArticle():
     
     def _get_auteurs(self):
         authors_in_header = self._Soup.analytic.find_all('author')
+        print("HHHHHHHHHHHH")
+        print(authors_in_header)
+        print("HHHHHHHHHHHHHH")
         result = []
         for author in authors_in_header:
-            persname = author.persName
+            persname = author.persname
+            print("HEEEEEEERE", persname)
             if not persname:
                 continue
 
@@ -67,8 +79,9 @@ class ExtendedArticle():
             institution_address = self._elem_to_text(author.affiliation.address.addrLine)
 
             name = [var for var in [firstname, middlename, surname] if var]
-            author = (name, "", (institution_name, institution_address))
+            author = (" ".join(name), "", (institution_name, institution_address))
             result.append(author)
+            print(author)
         return result
     
     def _get_mots_cles(self):
@@ -80,7 +93,7 @@ class ExtendedArticle():
         return result
     
     def _get_references(self):
-        monogr_in_references = self.soup.back.find_all('monogr')
+        monogr_in_references = self._Soup.back.find_all('monogr')
         result = []
         for monogr in monogr_in_references:
             title = monogr.title
@@ -93,11 +106,14 @@ class ExtendedArticle():
         return result
     
     def set_data(self) -> None:
+        self._read_tei()
         self.Titre = self._get_title()
         self.Resume = self._get_abstract()
         self.Texte = self._get_text()
-        self.date_pub = Date(date="01/01/1970")
+        self.Date_pub = Date(date="01/01/1970")
+        print("---------------------------------")
         self.Auteurs = self._get_auteurs()
+        print("---------------------------------")
         self.Mots_Cles = self._get_mots_cles()
         self.References = self._get_references()
 
@@ -107,8 +123,7 @@ class ExtendedArticle():
     def get_date(self) -> str:
         return self.Date_pub.get_date()
 
-    def save_pdf(self, data) -> None:
-        self.Link = get_file_path(self.ID)
-        file = open(self.Link,'wb')
-        file.write(data)
-        file.close()
+    # def save_pdf(self, data) -> None:
+    #     self.Link = get_file_path(self.ID)
+    #     file = open(self.Link,'wb')
+    #     file.close()
