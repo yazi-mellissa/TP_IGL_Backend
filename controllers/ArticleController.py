@@ -1,56 +1,34 @@
 from typing import List
-from fastapi import FastAPI, HTTPException,status
-from elasticsearch_connect import get_elasticsearch
+from fastapi import status
+from elasticsearch_connect import ElasticsearchConnection
 from datetime import date, datetime
-import requests
-from sqlalchemy.orm import Session
 from models.Article import Article
-from models.Auteur import Auteur
-from models.Institution import Institution
-from models.Mot_Cle import Mot_Cle
-from models.Institution import Institution
 from utils.HTTPResponse import HTTPResponse
-from utils.ExtendedArticle import ExtendedArticle
 
 ##Elasticsearch_connection
-es = get_elasticsearch()
 index_name="articles"
 
-try:
-    if es.ping():
-        print("Connected to Elasticsearch")
-    else:
-        print("Unable to connect to Elasticsearch")
-except Exception as e:
-    print(f"Error connecting to Elasticsearch: {str(e)}")
-
 class ArticleController():
-    def __init__(self):
-        self.elasticsearch = get_elasticsearch()
-        try:
-            if es.ping():
-                print("Connected to Elasticsearch")
-            else:
-                print("Unable to connect to Elasticsearch")
-        except Exception as e:
-            print(f"Error connecting to Elasticsearch: {str(e)}")
-
+    
     def index_article(article: Article):
         try:
+            es = ElasticsearchConnection()
             es.index(index=index_name, body=article)
             raise HTTPResponse(status_code=status.HTTP_200_OK, detail="Article indexed successfully")
         except Exception as e:
             error_message = f"Error indexing Article: {str(e)}"
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_message)
+            raise HTTPResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_message)
 
     def delete_indexed_article(Article_Id):
+        es = ElasticsearchConnection()
         if es.exists(index=index_name, id=Article_Id):
             es.delete(index=index_name, id=Article_Id)
             raise HTTPResponse(status_code=status.HTTP_200_OK, detail="Article  deleted successfully from elasticsearch")
         else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No article found with this id in elasticsearch")   
+            raise HTTPResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No article found with this id in elasticsearch")   
         
     def get_all_indexed_articles():
+        es = ElasticsearchConnection()
         search_query = {"query": {"match_all": {}}}
         result = es.search(index=index_name, body=search_query)
         articles = result['hits']['hits']
@@ -68,6 +46,7 @@ class ArticleController():
         }
     
         try:
+            es = ElasticsearchConnection()
             response = es.search(index=index_name, body=query)
             hits = response.get("hits", {}).get("hits", [])
             articles = []

@@ -14,3 +14,8 @@ DatabaseCreds = {
 JwtCreds = {
     "Secret": getenv("SECRET_KEY")
 }
+ElasticsearchCreds = {
+    "Host": getenv("ELASTICSEARCH_HOST"),
+    "Port": getenv("ELASTICSEARCH_PORT"),
+    "ApiKey": getenv("ELASTICSEARCH_API_KEY")
+}
