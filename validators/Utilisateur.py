@@ -11,3 +11,6 @@ class User_Ajouter_Favoris(User):
     
 class User_Supprimer_Favoris(User_Ajouter_Favoris):
     pass
+
+class User_Rechercher(User):
+    query: str

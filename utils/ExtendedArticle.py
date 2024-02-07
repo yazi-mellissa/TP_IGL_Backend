@@ -3,6 +3,7 @@ from utils.Date import Date
 from grobid_client_python.grobid_client.grobid_client import GrobidClient
 from bs4 import BeautifulSoup
 import os
+import string
 
 class ExtendedArticle():
 
@@ -11,7 +12,7 @@ class ExtendedArticle():
     Resume : str 
     Texte : str
     Link : str
-    Date_pub : Date
+    Date_pub : Date or str
     _Soup: BeautifulSoup
 
     Auteurs : list[(str, str, (str, str))] = []
@@ -28,8 +29,8 @@ class ExtendedArticle():
         print("hh1")
         self.set_data()
         print("hh2")
-       # os.remove("./data/articles/current/current.pdf")
-       # os.remove("./data/articles/current/current.grobid.tei.xml")
+        os.remove("./data/articles/current/current.pdf")
+        os.remove("./data/articles/current/current.grobid.tei.xml")
 
     
     def set_id(self, ID : int) -> None:
@@ -62,24 +63,24 @@ class ExtendedArticle():
     
     def _get_auteurs(self):
         authors_in_header = self._Soup.analytic.find_all('author')
-        print("HHHHHHHHHHHH")
         print(authors_in_header)
-        print("HHHHHHHHHHHHHH")
         result = []
         for author in authors_in_header:
             persname = author.persname
-            print("HEEEEEEERE", persname)
             if not persname:
                 continue
 
             firstname = self._elem_to_text(persname.find("forename", type="first"))
             middlename = self._elem_to_text(persname.find("forename", type="middle"))
             surname = self._elem_to_text(persname.surname)
-            institution_name = self._elem_to_text(author.affiliation.orgName)
-            institution_address = self._elem_to_text(author.affiliation.address.addrLine)
+            institution_name = "university"
+            institution_address = "unknown"
+            if author.affiliation:
+                institution_name = self._elem_to_text(author.affiliation.orgname)
+                institution_address = self._elem_to_text(author.affiliation.address.addrline)
 
             name = [var for var in [firstname, middlename, surname] if var]
-            author = (" ".join(name), "", (institution_name, institution_address))
+            author = (" ".join(name), (".".join(name)+"@"+institution_name.replace(" ","")).lower()+".edu", (institution_name, institution_address))
             result.append(author)
             print(author)
         return result
@@ -89,7 +90,10 @@ class ExtendedArticle():
         result = []
         for keyword in keywords:
             term = self._elem_to_text(keyword)
-            if term: result.append(term)
+            if term: 
+                printable = set(string.printable)
+                term = ''.join(filter(lambda x: x in printable, term))
+                result.append(term)
         return result
     
     def _get_references(self):
@@ -110,15 +114,10 @@ class ExtendedArticle():
         self.Titre = self._get_title()
         self.Resume = self._get_abstract()
         self.Texte = self._get_text()
-        self.Date_pub = Date(date="01/01/1970")
-        print("---------------------------------")
+        self.Date_pub = Date.today()
         self.Auteurs = self._get_auteurs()
-        print("---------------------------------")
         self.Mots_Cles = self._get_mots_cles()
         self.References = self._get_references()
-
-    def indexer(self) -> None:
-        pass
 
     def get_date(self) -> str:
         return self.Date_pub.get_date()

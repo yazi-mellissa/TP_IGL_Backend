@@ -1,7 +1,21 @@
 from elasticsearch import Elasticsearch
+from utils.Creds import ElasticsearchCreds
 
-def get_elasticsearch():
-    return  Elasticsearch(    
-    [{'host': 'localhost', 'port': 9200,'scheme':'https'}],  
-    http_auth=('elastic', 'LNZ*SL+ZG110BGaw3N8f'),  verify_certs=False
-)
+class ElasticsearchConnection:
+    elasticsearch : Elasticsearch = None
+    def __init__(self):
+        self.elasticsearch = Elasticsearch(
+            [{'host': ElasticsearchCreds.get("Host"), 'port': int(ElasticsearchCreds.get("Port")),'scheme':'http'}],
+            http_auth=('elastic', ElasticsearchCreds.get("ApiKey")),
+            verify_certs=False
+        )
+        try:
+            if self.elasticsearch.ping():
+                print("Connected to Elasticsearch")
+            else:
+                print("Unable to connect to Elasticsearch")
+        except Exception as e:
+            print(f"Error connecting to Elasticsearch: {str(e)}")
+
+    def getEngine(self):
+        return self.elasticsearch

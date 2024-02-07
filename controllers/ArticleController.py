@@ -1,56 +1,60 @@
 from typing import List
-from fastapi import FastAPI, HTTPException,status
-from elasticsearch_connect import get_elasticsearch
+from fastapi import status
+from elasticsearch_connect import ElasticsearchConnection
 from datetime import date, datetime
-import requests
-from sqlalchemy.orm import Session
 from models.Article import Article
-from models.Auteur import Auteur
-from models.Institution import Institution
-from models.Mot_Cle import Mot_Cle
-from models.Institution import Institution
 from utils.HTTPResponse import HTTPResponse
 from utils.ExtendedArticle import ExtendedArticle
-
+from utils.Creds import ElasticsearchCreds
 ##Elasticsearch_connection
-es = get_elasticsearch()
 index_name="articles"
 
-try:
-    if es.ping():
-        print("Connected to Elasticsearch")
-    else:
-        print("Unable to connect to Elasticsearch")
-except Exception as e:
-    print(f"Error connecting to Elasticsearch: {str(e)}")
+class SafeArticle():
+    ID : int
+    Titre : str
+    Resume : str 
+    Texte : str
+    Date_pub : str
+    Auteurs : list[(str, str, (str, str))] = []
+    References : list[str] = []
+    Mots_Cles : list[str] = []
+
+    def __init__(self, id, titre, resume, texte, date_pub, auteurs, references, mots_cles):
+        self.ID = id
+        self.Titre = titre
+        self.Resume = resume
+        self.Texte = texte
+        self.Date_pub = date_pub
+        self.Auteurs = auteurs
+        self.References = references
+        self.Mots_Cles = mots_cles
 
 class ArticleController():
-    def __init__(self):
-        self.elasticsearch = get_elasticsearch()
+    
+    def index_article(article: SafeArticle):
         try:
-            if es.ping():
-                print("Connected to Elasticsearch")
-            else:
-                print("Unable to connect to Elasticsearch")
+            print(ElasticsearchCreds)
+            es = ElasticsearchConnection().getEngine()
+            print("wsalt hna")
+            es.index(index=index_name, body=article.__dict__)
+            print("mwsaltch")
+            return "ok"
+            # raise HTTPResponse(status_code=status.HTTP_200_OK, detail="Article indexed successfully")
         except Exception as e:
-            print(f"Error connecting to Elasticsearch: {str(e)}")
-
-    def index_article(article: Article):
-        try:
-            es.index(index=index_name, body=article)
-            raise HTTPResponse(status_code=status.HTTP_200_OK, detail="Article indexed successfully")
-        except Exception as e:
+            
             error_message = f"Error indexing Article: {str(e)}"
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_message)
+            raise HTTPResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_message)
 
     def delete_indexed_article(Article_Id):
+        es = ElasticsearchConnection().getEngine()
         if es.exists(index=index_name, id=Article_Id):
             es.delete(index=index_name, id=Article_Id)
             raise HTTPResponse(status_code=status.HTTP_200_OK, detail="Article  deleted successfully from elasticsearch")
         else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No article found with this id in elasticsearch")   
+            raise HTTPResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No article found with this id in elasticsearch")   
         
     def get_all_indexed_articles():
+        es = ElasticsearchConnection().getEngine()
         search_query = {"query": {"match_all": {}}}
         result = es.search(index=index_name, body=search_query)
         articles = result['hits']['hits']
@@ -62,12 +66,13 @@ class ArticleController():
             "query": {
                 "multi_match": {
                     "query": query_terms,
-                    "fields": ["Titre", "Mots_Cles", "Auteurs", "Texte"]
+                    "fields": ["Titre", "Mots_Cles", "Auteurs", "Texte", "References", "Resume"]
                 }
             }
         }
     
         try:
+            es = ElasticsearchConnection().getEngine()
             response = es.search(index=index_name, body=query)
             hits = response.get("hits", {}).get("hits", [])
             articles = []
@@ -77,7 +82,7 @@ class ArticleController():
                 articles.append(hit)
             #sort the search results in reverse chronological order
             sorted_articles = sorted(articles, 
-                                     key=lambda x: datetime.strptime(x["_source"].get("Date_Publication", ""), "%Y-%m-%d").date(), 
+                                     key=lambda x: datetime.strptime(x["_source"].get("Date_pub", ""), "%Y-%m-%d").date(), 
                                      reverse=True)
             return sorted_articles
         except Exception as e:

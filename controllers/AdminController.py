@@ -11,6 +11,7 @@ from utils.Auth import check_token, Token_Payload
 from utils.Role import Role
 from utils.HTTPResponse import HTTPResponse
 from utils.ExtendedArticle import ExtendedArticle
+from controllers.ArticleController import ArticleController, SafeArticle
 from passlib.hash import sha256_crypt
 
 # Done
@@ -90,8 +91,13 @@ class AdminController():
             
             # write the file
             temp_article.set_id(ID=nouveau_article.ID_Article)
+            print("tryhh")
+
+            print("wow")
             # temp_article.save_pdf(data=data.content)
-            
+            print(temp_article.Auteurs)
+            the_article = SafeArticle(temp_article.ID, temp_article.Titre, temp_article.Resume, temp_article.Texte, temp_article.get_date(), temp_article.Auteurs, temp_article.References, temp_article.Mots_Cles)
+            ArticleController.index_article(the_article)
             raise HTTPResponse(status_code=status.HTTP_200_OK,detail="Success")
         else: # is not PDF file
             raise HTTPResponse(status_code=status.HTTP_400_BAD_REQUEST,detail="Not a PDF file")

@@ -8,6 +8,7 @@ from models.Utilisateur import Utilisateur
 from utils import get_file_path
 from fastapi.responses import StreamingResponse
 from fastapi import HTTPException
+from controllers.ArticleController import ArticleController
 
 # Done
 
@@ -53,6 +54,17 @@ class UserController():
             user.Articles_Favoris.append(article)
             db.commit()
             raise HTTPResponse(status_code=status.HTTP_200_OK, detail="Article ajouter au favoris")
+
+    # Done | Works ?
+    def rechercher(db: Session, token: str, query: str):
+        checked_token = check_token(token = token)
+        result = ArticleController.search_articles(query)
+        raise HTTPResponse(
+            status_code=status.HTTP_200_OK,
+            detail={
+                "articles": result
+            },
+        )
 
     # Done | Works
     def supprimer_favori(db: Session, token: str, ID_article : int):
