@@ -1,13 +1,6 @@
 from fastapi.testclient import TestClient
 from main import app
-from tests.auth import *
+from tests.extraction_test import TestExtendedArticle
+import unittest
 
-client = TestClient(app)
-
-def test_read_main():
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {
-        "Status": "Success",
-        "Message": "Guerrout"
-    }
+unittest.main()

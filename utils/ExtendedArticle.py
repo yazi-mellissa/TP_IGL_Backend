@@ -26,9 +26,7 @@ class ExtendedArticle():
         file.close()
         client = GrobidClient(config_path="./config.json")
         client.process("processFulltextDocument", "./data/articles/current/", consolidate_citations=True, tei_coordinates=True, force=True)
-        print("hh1")
         self.set_data()
-        print("hh2")
         os.remove("./data/articles/current/current.pdf")
         os.remove("./data/articles/current/current.grobid.tei.xml")
 
@@ -63,7 +61,6 @@ class ExtendedArticle():
     
     def _get_auteurs(self):
         authors_in_header = self._Soup.analytic.find_all('author')
-        print(authors_in_header)
         result = []
         for author in authors_in_header:
             persname = author.persname
@@ -76,13 +73,14 @@ class ExtendedArticle():
             institution_name = "university"
             institution_address = "unknown"
             if author.affiliation:
-                institution_name = self._elem_to_text(author.affiliation.orgname)
-                institution_address = self._elem_to_text(author.affiliation.address.addrline)
+                if author.orgname:
+                    institution_name = self._elem_to_text(author.affiliation.orgname)
+                if author.adress and author.adress.addrline:
+                    institution_address = self._elem_to_text(author.affiliation.address.addrline)
 
             name = [var for var in [firstname, middlename, surname] if var]
             author = (" ".join(name), (".".join(name)+"@"+institution_name.replace(" ","")).lower()+".edu", (institution_name, institution_address))
             result.append(author)
-            print(author)
         return result
     
     def _get_mots_cles(self):

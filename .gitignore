@@ -2,3 +2,4 @@
 __pycache__
 data
 elasticsearch-8.12.1
+grobid_client_python

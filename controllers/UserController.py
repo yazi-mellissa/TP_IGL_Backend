@@ -58,14 +58,20 @@ class UserController():
     # Done | Works ?
     def rechercher(db: Session, token: str, query: str):
         checked_token = check_token(token = token)
-        result = ArticleController.search_articles(query)
+        results = ArticleController.search_articles(query)
+        temp = []
+        for element in results:
+            temp.append(element["_source"])
         raise HTTPResponse(
             status_code=status.HTTP_200_OK,
-            detail={
-                "articles": result
-            },
+            detail=temp,
         )
 
+    def get_article(db: Session, token: str, ID_Article: int):
+        check_token(token=token)
+        result = db.query(Article).where(Article.ID_Article == ID_Article).first()
+        raise HTTPResponse(status_code=status.HTTP_200_OK, detail=result.get_Object())
+    
     # Done | Works
     def supprimer_favori(db: Session, token: str, ID_article : int):
         checked_token = check_token(token=token)

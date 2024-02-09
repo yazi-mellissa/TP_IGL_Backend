@@ -14,3 +14,6 @@ class User_Supprimer_Favoris(User_Ajouter_Favoris):
 
 class User_Rechercher(User):
     query: str
+
+class User_Get_Article(User):
+    ID_Article: int

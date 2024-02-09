@@ -27,6 +27,10 @@ def handle_ajouter_favoris(user : User_Ajouter_Favoris, db: Session = Depends(ge
 def handle_search(user : User_Rechercher, db: Session = Depends(get_db)):
     UserController.rechercher(db, user.token, user.query)
     
+@router.post("/get-article")
+def handle_get_article(user: User_Get_Article, db: Session = Depends(get_db)):
+    UserController.get_article(db, user.token, user.ID_Article)
+    
 @router.post("/supprimer-article-favoris")
 def handle_supprimer_favoris(user : User_Supprimer_Favoris, db: Session = Depends(get_db)):
     UserController.supprimer_favori(db, user.token, user.ID_Article)
