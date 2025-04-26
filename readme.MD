@@ -24,22 +24,6 @@ The objective is to develop a Web application that allows users to search for sc
   - Index data into **Elasticsearch** for efficient searching.
 - **Review and correct** extracted data if necessary.
 
-### Technical Constraints:
-
-- Backend must be developed with **Python** (**FastAPI**).
-- Frontend must be developed with **React** (**Next.js**).
-- Use **Elasticsearch** for article indexing and searching.
-- Use a **relational database** (no NoSQL databases allowed) for non-article data.
-- Interface must be **user-friendly** and **responsive** (adapted to tablet and mobile devices).
-- **Docker deployment** is mandatory for teams of 6 students, optional for teams of 5.
-- Creative presentation of different information types is encouraged.
-- Generate code documentation automatically using a documentation tool.
-- Implement:
-  - **3 unit tests** (you are free to choose the features to test).
-  - **1 automated functional test** using Selenium (or an equivalent tool) for the "Search Articles" feature.
-- The code must be hosted on **GitHub** with **regular commits**.
-- Work as a team of 6 students (or 5 if necessary).
-
 ---
 # Backend
 
